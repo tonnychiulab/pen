@@ -273,7 +273,7 @@ function updateInfo() {
 const VBOX = 2048; // 資料座標系
 
 function toCanvas(x, y, size) {
-  return [x / VBOX * size, (VBOX - y) / VBOX * size];
+  return [x / VBOX * size, y / VBOX * size];
 }
 
 function drawOutline(ctx, stroke, size, style) {
