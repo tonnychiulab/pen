@@ -6,7 +6,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px;
+  padding: 8px;
 }
 .hidden { display: none !important; }
 h1 { font-size: 1.6rem; color: #e07b39; margin-bottom: 4px; }
@@ -75,9 +75,9 @@ h2 { font-size: 1.2rem; }
   justify-content: center; margin-bottom: 20px;
 }
 .char-btn {
-  width: 60px; height: 60px;
-  border-radius: 12px; border: 3px solid #ddd;
-  background: #fff; font-size: 2rem;
+  width: 72px; height: 72px;
+  border-radius: 14px; border: 3px solid #ddd;
+  background: #fff; font-size: 2.4rem;
   cursor: pointer; transition: all .2s; position: relative;
 }
 .char-btn.active { border-color: #e07b39; background: #fff3e8; }
@@ -92,22 +92,23 @@ h2 { font-size: 1.2rem; }
 
 .canvas-wrap {
   position: relative;
-  width: min(360px, 90vw); height: min(360px, 90vw);
-  background: #fff; border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.1);
+  width: min(92vw, calc(100svh - 200px));
+  height: min(92vw, calc(100svh - 200px));
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
   overflow: hidden; touch-action: none;
 }
 canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
 .info-row {
   display: flex; align-items: center; gap: 8px;
-  margin-top: 14px; width: min(360px, 90vw); flex-wrap: wrap;
+  margin-top: 12px; width: min(92vw, calc(100svh - 200px)); flex-wrap: wrap;
 }
-.stroke-info { flex: 1; font-size: 0.9rem; color: #666; min-width: 80px; }
+.stroke-info { flex: 1; font-size: 1rem; color: #666; min-width: 80px; }
 .hint-btn {
-  padding: 8px 14px; border-radius: 20px;
+  padding: 10px 16px; border-radius: 20px;
   border: 2px solid #e07b39; background: #fff;
-  color: #e07b39; font-size: 0.82rem; cursor: pointer; transition: all .2s;
+  color: #e07b39; font-size: 0.9rem; cursor: pointer; transition: all .2s;
 }
 .hint-btn:active { background: #e07b39; color: #fff; }
 .error { color: #e53935; font-size: 0.85rem; margin-top: 8px; }
