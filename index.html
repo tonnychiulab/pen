@@ -150,7 +150,8 @@
 
 <div class="info-row">
   <div class="stroke-info" id="stroke-info">載入中…</div>
-  <button class="hint-btn" id="hint-btn" onclick="showHint()">看提示</button>
+  <button class="hint-btn" onclick="showHint()">逐筆提示</button>
+  <button class="hint-btn" onclick="showFullOrder()">完整筆順</button>
 </div>
 <div class="error" id="error-msg"></div>
 
@@ -344,15 +345,33 @@ drC.addEventListener('pointermove', e => {
   if (!drawing) return;
   path.push(getPos(e));
   const size = drC.width;
+  const data = charData[curChar];
+  if (!data || curStroke >= data.length) return;
+
   drX.clearRect(0, 0, size, size);
+  drX.save();
+
+  // clip 到當前筆畫輪廓
+  drX.beginPath();
+  for (const cmd of data[curStroke].outline) {
+    if (cmd.type === 'M') { const [cx,cy]=toCanvas(cmd.x,cmd.y,size); drX.moveTo(cx,cy); }
+    else if (cmd.type === 'L') { const [cx,cy]=toCanvas(cmd.x,cmd.y,size); drX.lineTo(cx,cy); }
+    else if (cmd.type === 'Q') { const [bx,by]=toCanvas(cmd.begin.x,cmd.begin.y,size); const [ex,ey]=toCanvas(cmd.end.x,cmd.end.y,size); drX.quadraticCurveTo(bx,by,ex,ey); }
+  }
+  drX.closePath();
+  drX.clip();
+
+  // 粗筆刷填色（超出輪廓的自動被 clip 掉）
   drX.beginPath();
   drX.strokeStyle = '#1565c0';
-  drX.lineWidth = size * 0.025;
+  drX.lineWidth = size * 0.12;
   drX.lineCap = 'round';
   drX.lineJoin = 'round';
   drX.moveTo(path[0][0], path[0][1]);
   path.forEach(p => drX.lineTo(p[0], p[1]));
   drX.stroke();
+
+  drX.restore();
 });
 
 drC.addEventListener('pointerup', () => {
@@ -405,7 +424,7 @@ function checkStroke() {
   path = [];
 }
 
-// ── 提示動畫 ─────────────────────────────────────────────
+// ── 逐筆提示：動畫顯示當前劃的 track 引導點 ──────────────
 function showHint() {
   const data = charData[curChar];
   if (!data || curStroke >= data.length) return;
@@ -418,14 +437,115 @@ function showHint() {
     if (i >= track.length) return;
     const [x, y] = toCanvas(track[i].x, track[i].y, size);
     drX.beginPath();
-    drX.arc(x, y, size * 0.04, 0, Math.PI * 2);
-    drX.fillStyle = 'rgba(255,100,0,0.6)';
+    drX.arc(x, y, size * 0.05, 0, Math.PI * 2);
+    drX.fillStyle = 'rgba(255,100,0,0.7)';
     drX.fill();
+    // 箭頭線
+    if (i > 0) {
+      const [px, py] = toCanvas(track[i-1].x, track[i-1].y, size);
+      drX.beginPath();
+      drX.moveTo(px, py);
+      drX.lineTo(x, y);
+      drX.strokeStyle = 'rgba(255,100,0,0.5)';
+      drX.lineWidth = size * 0.015;
+      drX.stroke();
+    }
     i++;
-    setTimeout(step, 300);
+    setTimeout(step, 350);
   }
   step();
-  setTimeout(() => drX.clearRect(0, 0, size, size), track.length * 300 + 500);
+  setTimeout(() => drX.clearRect(0, 0, size, size), track.length * 350 + 800);
+}
+
+// ── 完整筆順：依序動畫填色每一劃 ────────────────────────
+function showFullOrder() {
+  const data = charData[curChar];
+  if (!data) return;
+  const size = bgC.width;
+
+  // 暫時蓋掉 bg，重新畫底色
+  bgX.clearRect(0, 0, size, size);
+  bgX.strokeStyle = '#f0e0d0';
+  bgX.lineWidth = 1;
+  bgX.setLineDash([4, 4]);
+  bgX.beginPath();
+  bgX.moveTo(size/2, 0); bgX.lineTo(size/2, size);
+  bgX.moveTo(0, size/2); bgX.lineTo(size, size/2);
+  bgX.stroke();
+  bgX.setLineDash([]);
+  // 全部畫灰底
+  data.forEach(s => drawOutline(bgX, s, size, '#e0e0e0'));
+  drX.clearRect(0, 0, size, size);
+
+  let si = 0;
+  function nextStroke() {
+    if (si >= data.length) {
+      // 播完後 1.5s 恢復正常狀態
+      setTimeout(renderChar, 1500);
+      return;
+    }
+    // 用動畫逐步填色：把筆畫分成幾段漸進顯示
+    const stroke = data[si];
+    const track = stroke.track;
+    const STEPS = 12;
+    let step = 0;
+
+    function fillStep() {
+      // 在 bg 上直接填色（用 clip 限制在輪廓內）
+      bgX.save();
+      bgX.beginPath();
+      for (const cmd of stroke.outline) {
+        if (cmd.type === 'M') { const [cx,cy]=toCanvas(cmd.x,cmd.y,size); bgX.moveTo(cx,cy); }
+        else if (cmd.type === 'L') { const [cx,cy]=toCanvas(cmd.x,cmd.y,size); bgX.lineTo(cx,cy); }
+        else if (cmd.type === 'Q') { const [bx,by]=toCanvas(cmd.begin.x,cmd.begin.y,size); const [ex,ey]=toCanvas(cmd.end.x,cmd.end.y,size); bgX.quadraticCurveTo(bx,by,ex,ey); }
+      }
+      bgX.closePath();
+      bgX.clip();
+
+      // 從第一個 track 點往最後一個 track 點畫粗線，逐步延伸
+      const t = (step + 1) / STEPS;
+      const endIdx = Math.floor(t * (track.length - 1));
+      bgX.beginPath();
+      bgX.strokeStyle = '#42a5f5';
+      bgX.lineWidth = size * 0.18;
+      bgX.lineCap = 'round';
+      bgX.lineJoin = 'round';
+      const [sx, sy] = toCanvas(track[0].x, track[0].y, size);
+      bgX.moveTo(sx, sy);
+      for (let k = 1; k <= endIdx; k++) {
+        const [tx, ty] = toCanvas(track[k].x, track[k].y, size);
+        bgX.lineTo(tx, ty);
+      }
+      // 插值到下一個點
+      if (endIdx < track.length - 1) {
+        const frac = t * (track.length - 1) - endIdx;
+        const [ax, ay] = toCanvas(track[endIdx].x, track[endIdx].y, size);
+        const [bx2, by2] = toCanvas(track[endIdx+1].x, track[endIdx+1].y, size);
+        bgX.lineTo(ax + (bx2-ax)*frac, ay + (by2-ay)*frac);
+      }
+      bgX.stroke();
+      bgX.restore();
+
+      // 顯示筆畫序號
+      drX.clearRect(0, 0, size, size);
+      const [nx, ny] = toCanvas(track[0].x, track[0].y, size);
+      drX.beginPath();
+      drX.arc(nx, ny, size*0.045, 0, Math.PI*2);
+      drX.fillStyle = '#e07b39';
+      drX.fill();
+      drX.fillStyle = '#fff';
+      drX.font = `bold ${size*0.04}px sans-serif`;
+      drX.textAlign = 'center';
+      drX.textBaseline = 'middle';
+      drX.fillText(si + 1, nx, ny);
+
+      step++;
+      if (step < STEPS) setTimeout(fillStep, 60);
+      else { drX.clearRect(0, 0, size, size); si++; setTimeout(nextStroke, 300); }
+    }
+    fillStep();
+  }
+  nextStroke();
 }
 
 // ── 紙花 ─────────────────────────────────────────────────
