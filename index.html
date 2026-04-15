@@ -8,29 +8,82 @@
 </head>
 <body>
 
-<h1>✏️ 筆順練習</h1>
-<p class="subtitle" id="date-label"></p>
-
-<div class="chars-row" id="chars-row"></div>
-
-<div class="canvas-wrap" id="canvas-wrap">
-  <canvas id="bg-canvas"></canvas>
-  <canvas id="draw-canvas"></canvas>
+<!-- 難度選擇畫面 -->
+<div id="screen-level">
+  <h1>✏️ 筆順練習</h1>
+  <p class="subtitle">選擇你的年齡</p>
+  <div class="level-grid">
+    <button class="level-btn" data-level="0">
+      <span class="level-emoji">🐣</span>
+      <span class="level-name">小小孩</span>
+      <span class="level-age">3–5 歲</span>
+    </button>
+    <button class="level-btn" data-level="1">
+      <span class="level-emoji">🌱</span>
+      <span class="level-name">低年級</span>
+      <span class="level-age">6–8 歲</span>
+    </button>
+    <button class="level-btn" data-level="2">
+      <span class="level-emoji">🌿</span>
+      <span class="level-name">中年級</span>
+      <span class="level-age">9–10 歲</span>
+    </button>
+    <button class="level-btn" data-level="3">
+      <span class="level-emoji">🌳</span>
+      <span class="level-name">高年級</span>
+      <span class="level-age">11–12 歲</span>
+    </button>
+  </div>
+  <button class="trophy-link" onclick="showTrophy()">🏆 我的獎章</button>
 </div>
 
-<div class="info-row">
-  <div class="stroke-info" id="stroke-info">載入中…</div>
-  <button class="hint-btn" onclick="showHint()">逐筆提示</button>
-  <button class="hint-btn" onclick="showFullOrder()">完整筆順</button>
-</div>
-<div class="error" id="error-msg"></div>
+<!-- 練習畫面 -->
+<div id="screen-practice" class="hidden">
+  <div class="top-bar">
+    <button class="back-btn" onclick="goBack()">← 返回</button>
+    <div class="stars-bar">
+      <span id="star-count">⭐ 0</span>
+    </div>
+    <button class="trophy-btn" onclick="showTrophy()">🏆</button>
+  </div>
 
-<div id="celebrate">
+  <p class="subtitle" id="date-label"></p>
+  <div class="chars-row" id="chars-row"></div>
+
+  <div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="draw-canvas"></canvas>
+  </div>
+
+  <div class="info-row">
+    <div class="stroke-info" id="stroke-info">載入中…</div>
+    <button class="hint-btn" onclick="showHint()">逐筆提示</button>
+    <button class="hint-btn" onclick="showFullOrder()">完整筆順</button>
+  </div>
+  <div class="error" id="error-msg"></div>
+</div>
+
+<!-- 獎章頁面 -->
+<div id="screen-trophy" class="hidden">
+  <div class="top-bar">
+    <button class="back-btn" onclick="closeTrophy()">← 返回</button>
+    <h2 style="flex:1;text-align:center;color:#e07b39">我的獎章</h2>
+    <div style="width:60px"></div>
+  </div>
+  <div class="stars-total">
+    <span id="trophy-stars">⭐ 0 顆星</span>
+    <p class="stars-hint">每完成一個字 +1 顆星，集滿 5 顆解鎖獎章！</p>
+  </div>
+  <div class="badge-grid" id="badge-grid"></div>
+</div>
+
+<!-- 慶祝動畫 -->
+<div id="celebrate" class="hidden">
   <div class="celebrate-box">
-    <div class="celebrate-emoji">🎉</div>
-    <div class="celebrate-text">太棒了！</div>
-    <div class="celebrate-sub">今天的 3 個字全部完成！</div>
-    <button class="celebrate-btn" onclick="closeCelebrate()">再練一次</button>
+    <div class="celebrate-emoji" id="celebrate-emoji">🎉</div>
+    <div class="celebrate-text" id="celebrate-text">太棒了！</div>
+    <div class="celebrate-sub" id="celebrate-sub">今天的 3 個字全部完成！</div>
+    <button class="celebrate-btn" onclick="closeCelebrate()">繼續練習</button>
   </div>
 </div>
 
